@@ -19,14 +19,20 @@ func main() {
 		panic(err)
 	}
 
-	svc := dynamodb.NewFromConfig(cfg)
-	out, err := svc.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	svc := dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
+		o.EndpointResolver = dynamodb.EndpointResolverFromURL("http://localhost:8000")
+	})
+	out, err := svc.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
 		TableName: aws.String("my-table"),
-		Item: map[string]types.AttributeValue{
-			"id":    &types.AttributeValueMemberS{Value: "12346"},
-			"name":  &types.AttributeValueMemberS{Value: "Tia La"},
-			"email": &types.AttributeValueMemberS{Value: "tia.lapinjoki14@gmail.com"},
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: "123"},
 		},
+		UpdateExpression: aws.String("set firstName = :firstName"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":firstName": &types.AttributeValueMemberS{Value: "Tia Lapinjoki"},
+			":company":   &types.AttributeValueMemberS{Value: "Googoo"},
+		},
+		ConditionExpression: aws.String("attribute_not_exists(deletedAt and company = :company"),
 	})
 
 	if err != nil {
